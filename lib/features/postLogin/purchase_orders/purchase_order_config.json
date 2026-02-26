@@ -1,0 +1,159 @@
+{
+    "moduleName": "purchase_order",
+    "entityMeta": {
+        "entityName": "Purchase Order",
+        "entityNameLower": "purchase order",
+        "entityNamePlural": "Purchase Orders",
+        "entityNamePluralLower": "purchase orders"
+    },
+    "table": {
+        "name": "purchase_order",
+        "viewName": "view_purchase_orders",
+        "idField": "po_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/purchaseOrders",
+        "listRouteName": "purchaseOrders",
+        "newRouteName": "newPurchaseOrder",
+        "editRouteName": "editPurchaseOrder",
+        "viewRouteName": "viewPurchaseOrder"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": false
+        },
+        "searchFields": [
+            "po_route_id_label",
+            "po_shop_id_label",
+            "status",
+            "created_by_label",
+            "updated_by_label"
+        ]
+    },
+    "fields": [
+        {
+            "name": "po_id",
+            "label": "PO ID",
+            "type": "text",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": true,
+            "visibleInForm": false
+        },
+        {
+            "name": "po_route_id",
+            "label": "Route",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "routes",
+                "valueKey": "route_id",
+                "labelKey": "route_name"
+            }
+        },
+        {
+            "name": "po_shop_id",
+            "label": "Shop",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "shops",
+                "valueKey": "shop_id",
+                "labelKey": "shop_name"
+            }
+        },
+        {
+            "name": "po_total_amount",
+            "label": "Total Amount",
+            "type": "doubleField",
+            "required": false,
+            "prefix": "₹ "
+        },
+        {
+            "name": "po_line_item_count",
+            "label": "Line Item Count",
+            "type": "intField",
+            "required": false
+        },
+        {
+            "name": "user_comment",
+            "label": "User Comment",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 500
+        },
+        {
+            "name": "profit_to_shop",
+            "label": "Profit to Shop",
+            "type": "doubleField",
+            "required": false,
+            "prefix": "₹ "
+        },
+        {
+            "name": "po_lat",
+            "label": "Latitude",
+            "type": "doubleField",
+            "required": false
+        },
+        {
+            "name": "po_long",
+            "label": "Longitude",
+            "type": "doubleField",
+            "required": false
+        },
+        {
+            "name": "status",
+            "label": "Status",
+            "type": "dropdown",
+            "required": true,
+            "dropdownOptions": [
+                "pending",
+                "confirmed",
+                "delivered",
+                "cancelled"
+            ]
+        },
+        {
+            "name": "created_by",
+            "label": "Created By",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            },
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_by",
+            "label": "Updated By",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            },
+            "visibleInForm": false
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

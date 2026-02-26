@@ -1,0 +1,123 @@
+{
+    "moduleName": "po_collections",
+    "entityMeta": {
+        "entityName": "Collection",
+        "entityNameLower": "collection",
+        "entityNamePlural": "Collections",
+        "entityNamePluralLower": "collections"
+    },
+    "table": {
+        "name": "po_collections",
+        "viewName": "view_po_collections",
+        "idField": "collection_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/collections",
+        "listRouteName": "collections",
+        "newRouteName": "newCollection",
+        "editRouteName": "editCollection",
+        "viewRouteName": "viewCollection"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": false
+        },
+        "searchFields": [
+            "shop_id_label",
+            "route_id_label",
+            "cheque_no",
+            "comments"
+        ]
+    },
+    "fields": [
+        {
+            "name": "collection_id",
+            "label": "ID",
+            "type": "text",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "po_id",
+            "label": "PO",
+            "type": "text",
+            "required": true,
+            "visibleInList": true
+        },
+        {
+            "name": "shop_id_label",
+            "label": "Shop",
+            "type": "text",
+            "visibleInList": true,
+            "readOnly": true
+        },
+        {
+            "name": "route_id_label",
+            "label": "Route",
+            "type": "text",
+            "visibleInList": true,
+            "readOnly": true
+        },
+        {
+            "name": "collected_amount",
+            "label": "Collected Amount",
+            "type": "doubleField",
+            "required": true,
+            "prefix": "₹ "
+        },
+        {
+            "name": "is_cash",
+            "label": "Cash",
+            "type": "boolean",
+            "required": false
+        },
+        {
+            "name": "is_online",
+            "label": "Online",
+            "type": "boolean",
+            "required": false
+        },
+        {
+            "name": "is_cheque",
+            "label": "Cheque",
+            "type": "boolean",
+            "required": false
+        },
+        {
+            "name": "cheque_no",
+            "label": "Cheque No",
+            "type": "text",
+            "required": false
+        },
+        {
+            "name": "is_sign",
+            "label": "Sign",
+            "type": "boolean",
+            "required": false
+        },
+        {
+            "name": "sign_amount",
+            "label": "Sign Amount",
+            "type": "doubleField",
+            "required": false,
+            "prefix": "₹ "
+        },
+        {
+            "name": "comments",
+            "label": "Comments",
+            "type": "textarea",
+            "required": false
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "visibleInForm": false
+        }
+    ]
+}

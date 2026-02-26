@@ -1,0 +1,207 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Module Configuration",
+    "description": "Configuration schema for creating new modules in the app",
+    "type": "object",
+    "required": [
+        "moduleName",
+        "entityMeta",
+        "table",
+        "routes",
+        "fields"
+    ],
+    "properties": {
+        "moduleName": {
+            "type": "string",
+            "description": "Unique identifier for the module (e.g., 'notes', 'roles')"
+        },
+        "entityMeta": {
+            "type": "object",
+            "required": [
+                "entityName",
+                "entityNamePlural"
+            ],
+            "properties": {
+                "entityName": {
+                    "type": "string",
+                    "description": "Singular name (e.g., 'Note')"
+                },
+                "entityNameLower": {
+                    "type": "string",
+                    "description": "Lowercase singular (e.g., 'note')"
+                },
+                "entityNamePlural": {
+                    "type": "string",
+                    "description": "Plural name (e.g., 'Notes')"
+                },
+                "entityNamePluralLower": {
+                    "type": "string",
+                    "description": "Lowercase plural (e.g., 'notes')"
+                }
+            }
+        },
+        "table": {
+            "type": "object",
+            "required": [
+                "name",
+                "idField"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Database table name"
+                },
+                "viewName": {
+                    "type": "string",
+                    "description": "Database view name (optional, for table/view strategy)"
+                },
+                "idField": {
+                    "type": "string",
+                    "description": "Primary key field name"
+                },
+                "timestampField": {
+                    "type": "string",
+                    "description": "Timestamp field for sorting"
+                }
+            }
+        },
+        "routes": {
+            "type": "object",
+            "required": [
+                "basePath"
+            ],
+            "properties": {
+                "basePath": {
+                    "type": "string",
+                    "description": "Base route path (e.g., '/notes')"
+                },
+                "listRouteName": {
+                    "type": "string"
+                },
+                "newRouteName": {
+                    "type": "string"
+                },
+                "editRouteName": {
+                    "type": "string"
+                },
+                "viewRouteName": {
+                    "type": "string"
+                }
+            }
+        },
+        "listPage": {
+            "type": "object",
+            "properties": {
+                "sorting": {
+                    "type": "object",
+                    "required": [
+                        "field",
+                        "sortAscending"
+                    ],
+                    "properties": {
+                        "field": {
+                            "type": "string",
+                            "description": "Field to sort by (e.g., 'created_at', 'updated_at')"
+                        },
+                        "sortAscending": {
+                            "type": "boolean",
+                            "description": "Sort order: true for ascending, false for descending"
+                        }
+                    }
+                },
+                "searchFields": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Fields to search in"
+                }
+            }
+        },
+        "fields": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "label",
+                    "type"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Field name in database"
+                    },
+                    "label": {
+                        "type": "string",
+                        "description": "Display label"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "textarea",
+                            "switchField",
+                            "dropdown",
+                            "doubleField",
+                            "intField",
+                            "textField",
+                            "integer"
+                        ]
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "readOnly": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "visibleInList": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether the field is shown in list views"
+                    },
+                    "visibleInForm": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether the field is shown in create/edit forms"
+                    },
+                    "maxLength": {
+                        "type": "integer"
+                    },
+                    "prefix": {
+                        "type": "string",
+                        "description": "Prefix for display (e.g., '₹ ')"
+                    },
+                    "suffix": {
+                        "type": "string",
+                        "description": "Suffix for display (e.g., ' kg')"
+                    },
+                    "dropdownOptions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Static dropdown options"
+                    },
+                    "dropdownSource": {
+                        "type": "object",
+                        "description": "Dynamic dropdown from another table",
+                        "properties": {
+                            "table": {
+                                "type": "string"
+                            },
+                            "valueKey": {
+                                "type": "string"
+                            },
+                            "labelKey": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

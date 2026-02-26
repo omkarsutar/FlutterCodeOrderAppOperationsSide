@@ -1,0 +1,135 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../purchase_orders/purchase_order_barrel.dart';
+import '../../po_items/model/po_item_model.dart';
+import '../../po_items/service/po_item_service_impl.dart';
+import '../providers/cart_view_logic.dart';
+
+class CartOrderService {
+  final SupabaseClient client;
+  final PurchaseOrderServiceImpl poService;
+  final PoItemServiceImpl poItemService;
+
+  CartOrderService({
+    required this.client,
+    required this.poService,
+    required this.poItemService,
+  });
+
+  Future<void> placeOrder({
+    required ProcessedCartData viewData,
+    required String userId,
+    required String? roleName,
+  }) async {
+    // Default hardcoded IDs for guest and salesperson
+    String poShopId = '322d2aeb-34b3-47ef-aa5b-e411add1c7ba';
+    String poRouteId = '1ce6a931-4866-4645-a680-102b4b9e923b';
+
+    // Handle Retailer specific IDs
+    if (roleName?.toLowerCase() == 'retailer') {
+      try {
+        final link = await client
+            .from('retailer_shop_link')
+            .select('shop_id, shops!inner(shops_primary_route)')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (link != null) {
+          poShopId = link['shop_id'] as String;
+          poRouteId = link['shops']['shops_primary_route'] as String;
+          debugPrint(
+            '[CartOrderService] Retailer link found: shop=$poShopId, route=$poRouteId',
+          );
+        }
+      } catch (e) {
+        debugPrint('[CartOrderService] Error fetching retailer link: $e');
+      }
+    }
+
+    final currentUser = client.auth.currentUser;
+    final userEmail = currentUser?.email ?? '';
+    final userName =
+        currentUser?.userMetadata?['full_name'] ??
+        currentUser?.userMetadata?['name'] ??
+        userEmail.split('@').first;
+
+    final prefs = await SharedPreferences.getInstance();
+    final utmSource = prefs.getString('utm_source') ?? '';
+
+    String userRoleStr = roleName != null ? ' [$roleName]' : '';
+    String userComment = '$userName ($userEmail)$userRoleStr';
+    if (utmSource.isNotEmpty) {
+      userComment += ' [UTM: $utmSource]';
+    }
+
+    final po = ModelPurchaseOrder(
+      poTotalAmount: double.tryParse(viewData.totalAmount.replaceAll(',', '')),
+      poLineItemCount: viewData.itemCount,
+      poShopId: poShopId,
+      poRouteId: poRouteId,
+      status: 'confirmed',
+      userComment: userComment,
+      createdBy: userId,
+      updatedBy: userId,
+    );
+
+    final createdPo = await poService.create(po);
+    final newPoId = createdPo.poId;
+
+    if (newPoId == null) {
+      throw Exception('Failed to get generated PO ID');
+    }
+
+    for (final processedItem in viewData.items) {
+      final item = ModelPoItem(
+        poItemId: null,
+        poId: newPoId,
+        productId: processedItem.item.productId,
+        itemName: processedItem.item.itemName,
+        itemQty: processedItem.item.itemQty,
+        itemSellRate: processedItem.item.itemSellRate,
+        itemPrice: processedItem.item.itemPrice,
+        itemUnitMrp: processedItem.item.itemUnitMrp,
+        profitToShop: processedItem.item.profitToShop,
+        createdBy: userId,
+        updatedBy: userId,
+      );
+      await poItemService.create(item);
+    }
+
+    // WhatsApp sharing
+    await shareOrderToWhatsApp(viewData);
+  }
+
+  Future<void> shareOrderToWhatsApp(ProcessedCartData viewData) async {
+    final buffer = StringBuffer();
+    buffer.writeln('🛒 *Order Details*');
+    buffer.writeln('');
+    buffer.writeln('Total Items: ${viewData.itemCount}');
+    buffer.writeln('');
+    buffer.writeln('📋 *Items:*');
+
+    for (var processedItem in viewData.items) {
+      buffer.writeln('');
+      buffer.writeln('▪️ ${processedItem.productName}');
+      buffer.writeln('   Qty: ${processedItem.formattedQty}');
+    }
+
+    buffer.writeln('');
+    buffer.writeln('━━━━━━━━━━━━━━━');
+    buffer.writeln('💰 *Total Amount:* ₹${viewData.totalAmount}');
+    buffer.writeln('📈 *Shop Profit:* ₹${viewData.totalProfit}');
+
+    final message = Uri.encodeComponent(buffer.toString());
+    final whatsappUrl = 'https://wa.me/919421582162?text=$message';
+    final uri = Uri.parse(whatsappUrl);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('[CartOrderService] Could not launch WhatsApp');
+    }
+  }
+}

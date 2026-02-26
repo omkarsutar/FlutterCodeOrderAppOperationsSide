@@ -1,0 +1,219 @@
+{
+    "moduleName": "product",
+    "entityMeta": {
+        "entityName": "Product",
+        "entityNameLower": "product",
+        "entityNamePlural": "Products",
+        "entityNamePluralLower": "products"
+    },
+    "table": {
+        "name": "product",
+        "viewName": "view_products",
+        "idField": "product_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/products",
+        "listRouteName": "products",
+        "newRouteName": "newProduct",
+        "editRouteName": "editProduct",
+        "viewRouteName": "viewProduct"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": true
+        },
+        "searchFields": [
+            "product_name",
+            "product_type",
+            "packaging_type"
+        ]
+    },
+    "fields": [
+        {
+            "name": "product_id",
+            "label": "Product ID",
+            "type": "text",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": true,
+            "visibleInForm": false
+        },
+        {
+            "name": "product_type",
+            "label": "Product Type",
+            "type": "dropdown",
+            "required": true,
+            "dropdownOptions": [
+                "Aata",
+                "Biscuit",
+                "Color",
+                "Essence",
+                "Goli",
+                "Pow Custard",
+                "Pow Ice Cream Mix",
+                "Pow Jelly",
+                "Powder",
+                "Pouch"
+            ],
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "product_name",
+            "label": "Product Name",
+            "type": "text",
+            "required": true,
+            "maxLength": 200,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "product_weight_unit",
+            "label": "Weight Unit",
+            "type": "dropdown",
+            "required": true,
+            "dropdownOptions": [
+                "gms",
+                "kg",
+                "ml"
+            ],
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "product_weight_value",
+            "label": "Weight",
+            "type": "doubleField",
+            "required": true,
+            "suffix": " ",
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "purchase_rate_for_retailer",
+            "label": "Purchase Rate (Retailer)",
+            "type": "doubleField",
+            "required": true,
+            "prefix": "₹ ",
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "mrp",
+            "label": "MRP",
+            "type": "doubleField",
+            "required": true,
+            "prefix": "₹ ",
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "packaging_type",
+            "label": "Packaging Type",
+            "type": "dropdown",
+            "required": true,
+            "dropdownOptions": [
+                "box",
+                "pouch"
+            ],
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_outer",
+            "label": "Is Outer",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "pieces_per_outer",
+            "label": "Pieces per Outer",
+            "type": "intField",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_active",
+            "label": "Is Active",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_available",
+            "label": "Is Available",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "product_image_url",
+            "label": "Product Image",
+            "type": "text",
+            "required": false,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_by",
+            "label": "Created By",
+            "type": "dropdown",
+            "required": true,
+            "readOnly": true,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            },
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_by",
+            "label": "Updated By",
+            "type": "dropdown",
+            "required": true,
+            "readOnly": true,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            },
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "qtyindecimal",
+            "label": "Qty in Decimal",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

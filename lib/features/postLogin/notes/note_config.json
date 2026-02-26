@@ -1,0 +1,60 @@
+{
+    "moduleName": "tbl_notes",
+    "entityMeta": {
+        "entityName": "Note",
+        "entityNameLower": "note",
+        "entityNamePlural": "Notes",
+        "entityNamePluralLower": "notes"
+    },
+    "table": {
+        "name": "tbl_notes",
+        "viewName": "view_notes",
+        "idField": "note_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/notes",
+        "listRouteName": "notes",
+        "newRouteName": "newNote",
+        "editRouteName": "editNote",
+        "viewRouteName": "viewNote"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": false
+        },
+        "searchFields": [
+            "body"
+        ]
+    },
+    "fields": [
+        {
+            "name": "body",
+            "label": "Note",
+            "type": "textarea",
+            "required": true,
+            "maxLength": 500,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

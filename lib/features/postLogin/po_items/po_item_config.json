@@ -1,0 +1,170 @@
+{
+    "moduleName": "po_item",
+    "entityMeta": {
+        "entityName": "PO Item",
+        "entityNameLower": "po item",
+        "entityNamePlural": "PO Items",
+        "entityNamePluralLower": "po items"
+    },
+    "table": {
+        "name": "po_item",
+        "viewName": "view_po_items",
+        "idField": "po_item_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/poItems",
+        "listRouteName": "poItems",
+        "newRouteName": "newPoItem",
+        "editRouteName": "editPoItem",
+        "viewRouteName": "viewPoItem"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": false
+        },
+        "searchFields": [
+            "item_name",
+            "product_id_label",
+            "po_id"
+        ]
+    },
+    "fields": [
+        {
+            "name": "po_item_id",
+            "label": "Item ID",
+            "type": "text",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": true,
+            "visibleInForm": false
+        },
+        {
+            "name": "po_id",
+            "label": "Purchase Order",
+            "type": "dropdown",
+            "required": true,
+            "visibleInList": true,
+            "dropdownSource": {
+                "table": "purchase_order",
+                "valueKey": "po_id",
+                "labelKey": "po_id"
+            },
+            "visibleInForm": false
+        },
+        {
+            "name": "product_id",
+            "label": "Product",
+            "type": "dropdown",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true,
+            "dropdownSource": {
+                "table": "product",
+                "valueKey": "product_id",
+                "labelKey": "product_name"
+            }
+        },
+        {
+            "name": "item_name",
+            "label": "Item Name",
+            "type": "text",
+            "required": false,
+            "visibleInList": true,
+            "visibleInForm": true,
+            "maxLength": 255
+        },
+        {
+            "name": "item_qty",
+            "label": "Quantity",
+            "type": "doubleField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true,
+            "suffix": " units"
+        },
+        {
+            "name": "item_sell_rate",
+            "label": "Sell Rate",
+            "type": "doubleField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true,
+            "prefix": "₹ "
+        },
+        {
+            "name": "item_price",
+            "label": "Item Price",
+            "type": "doubleField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true,
+            "prefix": "₹ "
+        },
+        {
+            "name": "item_unit_mrp",
+            "label": "Unit MRP",
+            "type": "doubleField",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true,
+            "prefix": "₹ "
+        },
+        {
+            "name": "profit_to_shop",
+            "label": "Profit to Shop",
+            "type": "doubleField",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true,
+            "prefix": "₹ "
+        },
+        {
+            "name": "created_by",
+            "label": "Created By",
+            "type": "dropdown",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            }
+        },
+        {
+            "name": "updated_by",
+            "label": "Updated By",
+            "type": "dropdown",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false,
+            "dropdownSource": {
+                "table": "users",
+                "valueKey": "user_id",
+                "labelKey": "full_name"
+            }
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

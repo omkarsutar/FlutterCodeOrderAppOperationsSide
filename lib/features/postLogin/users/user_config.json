@@ -1,0 +1,86 @@
+{
+    "moduleName": "users",
+    "entityMeta": {
+        "entityName": "User",
+        "entityNameLower": "user",
+        "entityNamePlural": "Users",
+        "entityNamePluralLower": "users"
+    },
+    "table": {
+        "name": "users",
+        "viewName": "view_users",
+        "idField": "user_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/users",
+        "listRouteName": "users",
+        "newRouteName": "newUser",
+        "editRouteName": "editUser",
+        "viewRouteName": "viewUser"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": true
+        },
+        "searchFields": [
+            "full_name"
+        ]
+    },
+    "fields": [
+        {
+            "name": "full_name",
+            "label": "Full Name",
+            "type": "text",
+            "required": true,
+            "maxLength": 100,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "role_id",
+            "label": "Role",
+            "type": "dropdown",
+            "required": false,
+            "dropdownSource": {
+                "table": "rbac_roles",
+                "valueKey": "role_id",
+                "labelKey": "role_name"
+            },
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "preferred_route_id",
+            "label": "Preferred Route",
+            "type": "dropdown",
+            "required": false,
+            "dropdownSource": {
+                "table": "routes",
+                "valueKey": "route_id",
+                "labelKey": "route_name"
+            },
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

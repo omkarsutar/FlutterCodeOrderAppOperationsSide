@@ -1,0 +1,77 @@
+{
+    "moduleName": "rbac_roles",
+    "entityMeta": {
+        "entityName": "Role",
+        "entityNameLower": "role",
+        "entityNamePlural": "Roles",
+        "entityNamePluralLower": "roles"
+    },
+    "table": {
+        "name": "rbac_roles",
+        "viewName": "view_roles",
+        "idField": "role_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/roles",
+        "listRouteName": "roles",
+        "newRouteName": "newRole",
+        "editRouteName": "editRole",
+        "viewRouteName": "viewRole"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": true
+        },
+        "searchFields": [
+            "role_name"
+        ]
+    },
+    "fields": [
+        {
+            "name": "role_name",
+            "label": "Role Name",
+            "type": "text",
+            "required": true,
+            "maxLength": 100,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "role_description",
+            "label": "Description",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 500,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_active",
+            "label": "Active",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

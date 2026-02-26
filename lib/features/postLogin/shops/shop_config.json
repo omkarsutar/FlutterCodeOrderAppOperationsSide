@@ -1,0 +1,185 @@
+{
+    "moduleName": "shops",
+    "entityMeta": {
+        "entityName": "Shop",
+        "entityNameLower": "shop",
+        "entityNamePlural": "Shops",
+        "entityNamePluralLower": "shops"
+    },
+    "table": {
+        "name": "shops",
+        "viewName": "view_shops",
+        "idField": "shop_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/shops",
+        "listRouteName": "shops",
+        "newRouteName": "newShop",
+        "editRouteName": "editShop",
+        "viewRouteName": "viewShop"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": false
+        },
+        "searchFields": [
+            "shop_name",
+            "shop_person_name",
+            "shops_primary_route_label"
+        ]
+    },
+    "fields": [
+        {
+            "name": "shop_name",
+            "label": "Shop Name",
+            "type": "text",
+            "required": true,
+            "maxLength": 200,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_location_url",
+            "label": "Location URL",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shops_primary_route",
+            "label": "Primary Route",
+            "type": "dropdown",
+            "required": false,
+            "dropdownSource": {
+                "table": "routes",
+                "valueKey": "route_id",
+                "labelKey": "route_name"
+            },
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_person_name",
+            "label": "Contact Person",
+            "type": "text",
+            "required": false,
+            "maxLength": 100,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_mobile_1",
+            "label": "Mobile 1",
+            "type": "text",
+            "required": false,
+            "maxLength": 15,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_mobile_2",
+            "label": "Mobile 2",
+            "type": "text",
+            "required": false,
+            "maxLength": 15,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_note",
+            "label": "Note",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 500,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "hidden_note",
+            "label": "Hidden Note",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 500,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_active",
+            "label": "Active",
+            "type": "switchField",
+            "required": false,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_landmark",
+            "label": "Landmark",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_address",
+            "label": "Address",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 1000,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_photo_id",
+            "label": "Photo ID",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_photo_url",
+            "label": "Photo URL",
+            "type": "text",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_lat",
+            "label": "Latitude",
+            "type": "doubleField",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "shop_long",
+            "label": "Longitude",
+            "type": "doubleField",
+            "required": false,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

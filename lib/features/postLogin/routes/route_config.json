@@ -1,0 +1,77 @@
+{
+    "moduleName": "routes",
+    "entityMeta": {
+        "entityName": "Route",
+        "entityNameLower": "route",
+        "entityNamePlural": "Routes",
+        "entityNamePluralLower": "routes"
+    },
+    "table": {
+        "name": "routes",
+        "viewName": "view_routes",
+        "idField": "route_id",
+        "timestampField": "created_at"
+    },
+    "routes": {
+        "basePath": "/routes",
+        "listRouteName": "routes",
+        "newRouteName": "newRoute",
+        "editRouteName": "editRoute",
+        "viewRouteName": "viewRoute"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": true
+        },
+        "searchFields": [
+            "route_name"
+        ]
+    },
+    "fields": [
+        {
+            "name": "route_name",
+            "label": "Route Name",
+            "type": "text",
+            "required": true,
+            "maxLength": 100,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "route_note",
+            "label": "Route Note",
+            "type": "textarea",
+            "required": false,
+            "maxLength": 500,
+            "visibleInList": false,
+            "visibleInForm": true
+        },
+        {
+            "name": "is_active",
+            "label": "Is Active",
+            "type": "switchField",
+            "required": false,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

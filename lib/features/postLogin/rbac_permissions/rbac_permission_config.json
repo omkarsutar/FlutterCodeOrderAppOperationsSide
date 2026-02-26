@@ -1,0 +1,119 @@
+{
+    "moduleName": "rbac_permissions",
+    "entityMeta": {
+        "entityName": "RBAC Permission",
+        "entityNameLower": "rbac permission",
+        "entityNamePlural": "RBAC Permissions",
+        "entityNamePluralLower": "rbac permissions"
+    },
+    "table": {
+        "name": "rbac_permissions",
+        "viewName": "view_rbac_permissions",
+        "idField": "permission_id",
+        "timestampField": "updated_at"
+    },
+    "routes": {
+        "basePath": "/rbac/permissions",
+        "listRouteName": "rbacPermissions",
+        "newRouteName": "newRbacPermission",
+        "editRouteName": "editRbacPermission",
+        "viewRouteName": "viewRbacPermission"
+    },
+    "listPage": {
+        "sorting": {
+            "field": "created_at",
+            "sortAscending": true
+        },
+        "searchFields": [
+            "role_name",
+            "module_name"
+        ]
+    },
+    "fields": [
+        {
+            "name": "permission_id",
+            "label": "Permission ID",
+            "type": "text",
+            "required": true,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "role_id",
+            "label": "Role",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "rbac_roles",
+                "valueKey": "role_id",
+                "labelKey": "role_name"
+            },
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "module_id",
+            "label": "Module",
+            "type": "dropdown",
+            "required": true,
+            "dropdownSource": {
+                "table": "rbac_modules",
+                "valueKey": "module_id",
+                "labelKey": "module_name"
+            },
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "can_read",
+            "label": "Read",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "can_create",
+            "label": "Create",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "can_update",
+            "label": "Update",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "can_delete",
+            "label": "Delete",
+            "type": "switchField",
+            "required": true,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "created_at",
+            "label": "Created At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        },
+        {
+            "name": "updated_at",
+            "label": "Updated At",
+            "type": "text",
+            "required": false,
+            "readOnly": true,
+            "visibleInList": false,
+            "visibleInForm": false
+        }
+    ]
+}

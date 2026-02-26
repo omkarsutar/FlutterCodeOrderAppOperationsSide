@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter Web on Chrome (port 3000)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "-d",
+                "chrome",
+                "--web-port=3000"
+            ]
+        },
+        {
+            "name": "Flutter Web via Web Server (port 3000)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "-d",
+                "web-server",
+                "--web-port=3000"
+            ]
+        }
+    ]
+}
