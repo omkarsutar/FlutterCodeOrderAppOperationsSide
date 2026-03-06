@@ -11,6 +11,7 @@ import '../../cart/providers/cart_providers.dart';
 import '../../../../router/app_routes.dart';
 import '../providers/product_providers.dart';
 import '../model/product_model.dart';
+import '../../po_items/model/po_item_model.dart';
 
 /// Product-specific View Page
 /// Decoupled from EntityViewPageRiverpod for customization
@@ -104,12 +105,6 @@ class ProductViewPageRiverpod extends ConsumerWidget {
           orElse: () => fields[0],
         )
         .displayValue;
-    final purchaseRate = fields
-        .firstWhere(
-          (f) => f.name == 'purchase_rate_for_retailer',
-          orElse: () => fields[0],
-        )
-        .displayValue;
     final mrp = fields
         .firstWhere((f) => f.name == 'mrp', orElse: () => fields[0])
         .displayValue;
@@ -123,7 +118,6 @@ class ProductViewPageRiverpod extends ConsumerWidget {
     final displayItems = [
       {'label': 'Type', 'value': productType},
       {'label': 'Weight', 'value': '$weightVal $weightUnit'},
-      {'label': 'Purchase Rate', 'value': purchaseRate},
       {'label': 'MRP', 'value': mrp},
       {'label': 'Packaging Type', 'value': packaging},
     ];
@@ -135,11 +129,6 @@ class ProductViewPageRiverpod extends ConsumerWidget {
         'value': '${product.piecesPerOuter} pcs/outer',
       });
     }
-
-    displayItems.add({
-      'label': 'Qty In Decimal',
-      'value': product.qtyInDecimal ? 'Yes' : 'No',
-    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,8 +340,22 @@ class ProductViewPageRiverpod extends ConsumerWidget {
             ),
             child: ElevatedButton(
               onPressed: () {
-                ref.read(selectedProductForAdditionProvider.notifier).state =
-                    product;
+                final cartNotifier = ref.read(cartProvider.notifier);
+
+                // Create a PO item from the product
+                final newItem = ModelPoItem(
+                  productId: product.productId,
+                  itemName: product.productName,
+                  itemQty: 1.0, // Default quantity
+                  itemSellRate: product.purchaseRateForRetailer,
+                  itemUnitMrp: product.mrp,
+                  itemPrice: product.purchaseRateForRetailer,
+                  profitToShop: product.mrp - product.purchaseRateForRetailer,
+                );
+
+                // Add to cart - this will set lastModifiedItemId and trigger highlight
+                cartNotifier.addItem(newItem);
+
                 context.goNamed(AppRoute.cartName);
               },
               style: ElevatedButton.styleFrom(

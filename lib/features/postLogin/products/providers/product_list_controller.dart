@@ -3,19 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/entity_service.dart';
-import '../../../../core/providers/core_providers.dart';
-import '../../../../router/app_routes.dart';
-import '../../cart/providers/cart_providers.dart';
 import '../model/product_model.dart';
 
 class ProductListState {
   final String searchQuery;
   final String? selectedType;
 
-  const ProductListState({
-    this.searchQuery = '',
-    this.selectedType = 'Pow Custard',
-  });
+  const ProductListState({this.searchQuery = '', this.selectedType = null});
 
   ProductListState copyWith({
     String? searchQuery,
@@ -34,7 +28,8 @@ class ProductListController extends AutoDisposeNotifier<ProductListState> {
   @override
   ProductListState build() {
     ref.onDispose(() => _searchDebounce?.cancel());
-    return const ProductListState();
+    // Explicitly return a state with null selectedType
+    return const ProductListState(searchQuery: '', selectedType: null);
   }
 
   void setSearchQuery(String query) {
@@ -43,14 +38,14 @@ class ProductListController extends AutoDisposeNotifier<ProductListState> {
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       state = state.copyWith(
         searchQuery: query.toLowerCase(),
-        selectedType: query.isNotEmpty ? () => null : null,
+        selectedType: () => null, // Always clear category filter when searching
       );
     });
   }
 
   void clearSearch() {
     _searchDebounce?.cancel();
-    state = state.copyWith(searchQuery: '', selectedType: null);
+    state = state.copyWith(searchQuery: '', selectedType: () => null);
   }
 
   void setSelectedType(String? type) {
@@ -66,14 +61,20 @@ class ProductListController extends AutoDisposeNotifier<ProductListState> {
     required String idField,
     required EntityAdapter<ModelProduct> adapter,
   }) {
-    final roleName = ref.read(roleNameProvider)?.toLowerCase() ?? 'null';
-
     try {
       if (isSelectionMode) {
-        context.pop(product);
-      } else if (roleName.contains('guest')) {
-        ref.read(selectedProductForAdditionProvider.notifier).state = product;
-        context.goNamed(AppRoute.cartName);
+        if (context.canPop()) {
+          context.pop(product);
+        } else {
+          debugPrint(
+            'ProductListController: Selection mode but nothing to pop',
+          );
+          // If we can't pop, fall back to pushing the view page as if it weren't selection mode
+          context.pushNamed(
+            viewRouteName,
+            pathParameters: {'id': adapter.getId(product, idField).toString()},
+          );
+        }
       } else {
         context.pushNamed(
           viewRouteName,

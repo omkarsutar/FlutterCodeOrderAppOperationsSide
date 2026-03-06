@@ -58,3 +58,9 @@ class UnknownException extends AppException {
   UnknownException(String message, [StackTrace? stackTrace])
     : super('Unknown Error: $message', stackTrace);
 }
+
+/// No internet connection exception
+/// Thrown when an API call is attempted without network connectivity
+class NoInternetException extends AppException {
+  NoInternetException() : super('No internet connection');
+}

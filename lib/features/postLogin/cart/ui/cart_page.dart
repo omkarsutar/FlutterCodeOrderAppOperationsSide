@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
-import '../providers/cart_providers.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/cart_view_logic.dart';
 import '../providers/cart_controller.dart';
+import '../providers/cart_providers.dart';
+import '../../../../core/providers/localization_provider.dart';
 import '../../products/product_barrel.dart';
+import '../../shops/shop_barrel.dart';
+import '../../routes/route_barrel.dart';
+import '../../purchase_orders/ui/widgets/po_shop_route_info.dart';
+import '../../purchase_orders/ui/widgets/po_actions.dart';
+import '../../purchase_orders/purchase_order_barrel.dart';
 import 'cart_item_card.dart';
-import 'cart_add_section.dart';
 
 class CartPage extends ConsumerStatefulWidget {
   const CartPage({super.key});
@@ -17,7 +23,8 @@ class CartPage extends ConsumerStatefulWidget {
 
 class _CartPageState extends ConsumerState<CartPage>
     with SingleTickerProviderStateMixin {
-  bool _isExpanded = false;
+  bool _isUpdating = false;
+
   late AnimationController _profitHighlightController;
   late Animation<double> _profitScaleAnimation;
   late Animation<Color?> _profitColorAnimation;
@@ -27,7 +34,7 @@ class _CartPageState extends ConsumerState<CartPage>
     super.initState();
     _profitHighlightController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _profitScaleAnimation =
@@ -65,12 +72,15 @@ class _CartPageState extends ConsumerState<CartPage>
 
   @override
   Widget build(BuildContext context) {
-    final cartState = ref.watch(cartProvider);
+    final theme = Theme.of(context);
     final viewData = ref.watch(cartViewLogicProvider);
-    final isEditing = ref.watch(isEditingCartItemProvider);
     final products = ref.watch(productsStreamProvider).value ?? [];
+    final l10n = ref.watch(l10nProvider);
+    final cartState = ref.watch(cartProvider);
 
-    // Trigger animation when profit or item count changes
+    final status = cartState.status?.toLowerCase();
+    final isReadOnly = status == 'delivered' || status == 'cancelled';
+
     ref.listen(
       cartViewLogicProvider.select((d) => (d.totalProfit, d.itemCount)),
       (previous, next) {
@@ -80,27 +90,46 @@ class _CartPageState extends ConsumerState<CartPage>
       },
     );
 
+    final canPop = context.canPop();
+
     return Scaffold(
-      appBar: const CustomAppBar(title: 'My Cart', showBack: false),
-      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(
+        title: l10n['my_cart'] ?? 'My Cart',
+        showBack: canPop,
+      ),
+      drawer: canPop ? null : const CustomDrawer(),
       body: Column(
         children: [
-          if (!viewData.isEmpty) _buildCartSummary(context, viewData),
+          if (!viewData.isEmpty) _buildSummaryHeader(context, viewData, l10n),
           Expanded(
             child: viewData.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.shopping_cart_outlined,
                           size: 64,
-                          color: Colors.grey,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
-                          'Your cart is empty',
-                          style: TextStyle(color: Colors.grey, fontSize: 18),
+                          l10n['empty_cart_msg'] ?? 'Your cart is empty',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed: () => context.goNamed('products'),
+                          icon: const Icon(Icons.add_shopping_cart),
+                          label: Text(
+                            l10n['go_to_products'] ?? 'Go to Products',
+                          ),
                         ),
                       ],
                     ),
@@ -114,235 +143,225 @@ class _CartPageState extends ConsumerState<CartPage>
                         key: ValueKey(processedItem.item.poItemId),
                         entity: processedItem.item,
                         products: products,
+                        isReadOnly: isReadOnly,
                       );
                     },
                   ),
           ),
-          if (!isEditing && !cartState.isNewItemAdded)
-            CartAddSection(products: products),
+          if (!viewData.isEmpty && !isReadOnly)
+            _buildActionFooter(context, viewData, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildCartSummary(BuildContext context, ProcessedCartData viewData) {
+  Widget _buildSummaryHeader(
+    BuildContext context,
+    ProcessedCartData viewData,
+    Map<String, String> l10n,
+  ) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => setState(() => _isExpanded = !_isExpanded),
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    _isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    size: 32,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildSummaryItem(
-                      context,
-                      'Items',
-                      viewData.itemCount.toString(),
-                    ),
-                    AnimatedBuilder(
-                      animation: _profitHighlightController,
-                      builder: (context, child) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _profitHighlightController.value > 0
-                                ? _profitColorAnimation.value
-                                : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ScaleTransition(
-                            scale: _profitScaleAnimation,
-                            child: _buildSummaryItem(
-                              context,
-                              'Shop Profit on MRP',
-                              '₹${viewData.totalProfit}',
-                              color: Colors.green,
-                              valueSize: 16,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildSummaryItem(
-                      context,
-                      'Total Amount',
-                      '₹${viewData.totalAmount}',
-                      isBold: true,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (_isExpanded) ...[
-            const Divider(height: 24),
-            _buildSummaryTable(context, viewData),
-          ],
-          const Divider(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      ref.read(cartControllerProvider).clearCart(context),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    'Empty Cart',
-                    style: TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => ref
-                      .read(cartControllerProvider)
-                      .handleOrderAction(context, viewData),
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text(
-                    'Place Order',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                ),
-              ),
-            ],
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            offset: const Offset(0, 4),
+            blurRadius: 8,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryTable(BuildContext context, ProcessedCartData viewData) {
-    final theme = Theme.of(context);
-    final textStyle = theme.textTheme.bodySmall?.copyWith(fontSize: 11);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
           children: [
-            Expanded(
-              flex: 3,
-              child: Text(
-                'Item Name',
-                style: textStyle?.copyWith(fontWeight: FontWeight.bold),
+            if (ref.watch(cartProvider).shopId != null) ...[
+              Builder(
+                builder: (context) {
+                  final cartState = ref.watch(cartProvider);
+                  final shopAsync = ref.watch(
+                    shopByIdProvider(cartState.shopId!),
+                  );
+                  final routeAsync = ref.watch(
+                    routeByIdProvider(cartState.routeId!),
+                  );
+                  final adapter = ref.watch(purchaseOrderAdapterProvider);
+
+                  // Create a dummy/temp PO entity for actions
+                  final tempPo = ModelPurchaseOrder(
+                    poId: cartState.purchaseOrderId,
+                    poShopId: cartState.shopId,
+                    poRouteId: cartState.routeId,
+                    status: cartState.status,
+                  );
+
+                  return PoShopRouteInfo(
+                    shopName: shopAsync.value?.shopName ?? 'Loading...',
+                    routeName: routeAsync.value?.routeName ?? 'Loading...',
+                    poId: null, // Hide PO ID on Cart Page
+                    status: cartState.status,
+                    trailing: PoActions(
+                      entity: tempPo,
+                      adapter: adapter,
+                      status: cartState.status ?? 'pending',
+                      isUpdating: _isUpdating,
+                      onUpdating: (val) {
+                        if (mounted) setState(() => _isUpdating = val);
+                      },
+                    ),
+                  );
+                },
               ),
-            ),
-            Expanded(
-              child: Text(
-                'Qty',
-                textAlign: TextAlign.right,
-                style: textStyle?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                'Rate',
-                textAlign: TextAlign.right,
-                style: textStyle?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                'Amt',
-                textAlign: TextAlign.right,
-                style: textStyle?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ...viewData.items.map((processedItem) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
+              const Divider(),
+              const SizedBox(height: 8),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    processedItem.productName,
-                    style: textStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                _buildSummaryItem(
+                  context,
+                  l10n['items'] ?? 'Items',
+                  '${viewData.itemCount}',
+                  valueSize: 18,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                 ),
-                Expanded(
-                  child: Text(
-                    processedItem.formattedQty,
-                    textAlign: TextAlign.right,
-                    style: textStyle,
-                  ),
+                AnimatedBuilder(
+                  animation: _profitHighlightController,
+                  builder: (context, child) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _profitHighlightController.value > 0
+                            ? _profitColorAnimation.value
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: ScaleTransition(
+                        scale: _profitScaleAnimation,
+                        child: _buildSummaryItem(
+                          context,
+                          l10n['shop_profit'] ?? 'Shop Profit on MRP',
+                          '₹${viewData.totalProfit}',
+                          color: Colors.green[700],
+                          valueSize: 18,
+                          isBold: true,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                Expanded(
-                  child: Text(
-                    processedItem.formattedRate,
-                    textAlign: TextAlign.right,
-                    style: textStyle,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    processedItem.formattedAmount,
-                    textAlign: TextAlign.right,
-                    style: textStyle,
-                  ),
+                _buildSummaryItem(
+                  context,
+                  l10n['final_amount'] ?? 'Final Amount',
+                  '₹${viewData.totalAmount}',
+                  isBold: true,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  valueSize: 18,
                 ),
               ],
             ),
-          );
-        }),
-      ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionFooter(
+    BuildContext context,
+    ProcessedCartData viewData,
+    Map<String, String> l10n,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            offset: const Offset(0, -4),
+            blurRadius: 12,
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Add Items
+            Expanded(
+              flex: 2,
+              child: OutlinedButton.icon(
+                onPressed: () => context.goNamed('products'),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(l10n['add_items'] ?? 'Add Items'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Empty Cart
+            OutlinedButton(
+              onPressed: () =>
+                  ref.read(cartControllerProvider).clearCart(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Icon(Icons.delete_outline_rounded),
+            ),
+            const SizedBox(width: 10),
+            // Place Order
+            Expanded(
+              flex: 3,
+              child: ElevatedButton.icon(
+                onPressed: () => ref
+                    .read(cartControllerProvider)
+                    .handleOrderAction(context, viewData),
+                icon: const Icon(
+                  Icons.shopping_cart_checkout_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  l10n['place_order'] ?? 'Place Order',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

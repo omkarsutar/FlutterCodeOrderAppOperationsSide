@@ -12,6 +12,7 @@ import '../model/purchase_order_model.dart';
 import '../providers/purchase_order_list_controller.dart';
 import '../providers/purchase_order_providers.dart';
 import 'purchase_order_list_tile.dart';
+import '../../cart/providers/cart_controller.dart';
 import '../../po_items/po_item_barrel.dart';
 
 /// Custom Purchase Order List Page - Riverpod & JSON based
@@ -309,7 +310,9 @@ class _PurchaseOrderListByShopIDState
           return PurchaseOrderListTile(
             entity: displayListItem,
             adapter: ref.watch(purchaseOrderAdapterProvider),
-            onTap: () => _navigateToPOItems(displayListItem),
+            onTap: () => ref
+                .read(cartControllerProvider)
+                .editPurchaseOrder(context, displayListItem),
           );
         } else {
           // Bottom padding for FAB

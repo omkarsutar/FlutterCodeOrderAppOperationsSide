@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/constants/app_constants.dart';
 
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/services/entity_service.dart';
@@ -184,7 +185,19 @@ class ShopListTile<T> extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        if (canCopyLink)
+                        if (canCopyLink &&
+                            (_isValidMobile(
+                                  adapter.getFieldValue(
+                                    entity,
+                                    ModelShopFields.shopMobile1,
+                                  ),
+                                ) ||
+                                _isValidMobile(
+                                  adapter.getFieldValue(
+                                    entity,
+                                    ModelShopFields.shopMobile2,
+                                  ),
+                                )))
                           InkWell(
                             onTap: () => _copyUtmLink(context),
                             borderRadius: BorderRadius.circular(20),
@@ -251,23 +264,30 @@ class ShopListTile<T> extends ConsumerWidget {
   }
 
   Future<void> _copyUtmLink(BuildContext context) async {
-    // Get shop mobile number (prefer mobile1, fallback to mobile2)
-    final mobile1 =
-        adapter
-            .getFieldValue(entity, ModelShopFields.shopMobile1)
-            ?.toString() ??
-        '';
-    final mobile2 =
-        adapter
-            .getFieldValue(entity, ModelShopFields.shopMobile2)
-            ?.toString() ??
-        '';
-    final mobileNumber = mobile1.isNotEmpty ? mobile1 : mobile2;
+    // Get shop mobile numbers
+    final mobile1 = adapter
+        .getFieldValue(entity, ModelShopFields.shopMobile1)
+        ?.toString();
+    final mobile2 = adapter
+        .getFieldValue(entity, ModelShopFields.shopMobile2)
+        ?.toString();
 
-    if (mobileNumber.isEmpty) {
-      SnackbarUtils.showError('Shop mobile number not available');
+    // Select first valid 10-digit mobile number
+    String? selectedMobile;
+    if (_isValidMobile(mobile1)) {
+      selectedMobile = mobile1;
+    } else if (_isValidMobile(mobile2)) {
+      selectedMobile = mobile2;
+    }
+
+    if (selectedMobile == null) {
+      SnackbarUtils.showError(
+        'Valid 10-digit shop mobile number not available',
+      );
       return;
     }
+
+    final mobileNumber = selectedMobile;
 
     // Translate mobile number digits to characters
     final translationMap = {
@@ -291,18 +311,60 @@ class ShopListTile<T> extends ConsumerWidget {
         .join('');
 
     final utmLink =
-        'https://omkarsutar.github.io/OrderAppV01?utm_source=$utmSource';
+        '${AppConstants.webAppUrlRetailerApp}?utm_source=$utmSource';
+    // 'https://omkarsutar.github.io/OrderAppV01?utm_source=$utmSource';
 
     // Copy to clipboard
-    await Clipboard.setData(ClipboardData(text: utmLink));
+    // Share to WhatsApp if mobile number is available
+    if (_isValidMobile(mobileNumber)) {
+      // Validate and format mobile number
+      String formattedMobile = mobileNumber;
 
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('UTM link copied to clipboard'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (mobileNumber.length == 10) {
+        // Add '91' prefix for 10-digit numbers
+        formattedMobile = '91$mobileNumber';
+      } else if (mobileNumber.length == 12) {
+        // Check if first 2 digits are '91', if not add '91' prefix
+        if (!mobileNumber.startsWith('91')) {
+          formattedMobile = '91$mobileNumber';
+        }
+      }
+
+      final message = Uri.encodeComponent(utmLink);
+      final whatsappUrl = 'https://wa.me/$formattedMobile?text=$message';
+      final uri = Uri.parse(whatsappUrl);
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not launch WhatsApp'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } else {
+      // Fallback to clipboard if no mobile number
+      await Clipboard.setData(ClipboardData(text: utmLink));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('UTM link copied to clipboard'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
+  }
+
+  bool _isValidMobile(dynamic value) {
+    if (value == null) return false;
+    final str = value.toString().trim();
+    if (str.length != 10) return false;
+    return double.tryParse(str) != null;
   }
 }

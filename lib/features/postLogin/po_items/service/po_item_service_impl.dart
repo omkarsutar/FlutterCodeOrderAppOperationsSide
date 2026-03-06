@@ -217,4 +217,10 @@ class PoItemServiceImpl extends ForeignKeyAwareService<ModelPoItem>
 
     return mapper.fromMap(inserted);
   }
+
+  /// Delete all items for a specific purchase order
+  Future<void> deleteAllByPo(String poId) async {
+    if (poId.isEmpty) throw Exception('PO ID not provided');
+    await client.from(tableName).delete().eq(ModelPoItemFields.poId, poId);
+  }
 }

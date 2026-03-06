@@ -81,3 +81,25 @@ Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
       ) ??
       false; // default to false if dismissed
 } */
+
+Future<void> showLoadingDialog({
+  required BuildContext context,
+  required String message,
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 24),
+            Text(message),
+          ],
+        ),
+      ),
+    ),
+  );
+}
