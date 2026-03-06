@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.dart';
 import 'package:flutter_supabase_order_app_mobile/core/utils/date_utils.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/entity_service.dart';
 import '../../po_items/po_item_barrel.dart';
 import '../model/purchase_order_model.dart';
 import '../providers/purchase_order_tile_logic.dart';
-import 'purchase_order_share_preview_page.dart';
+import '../../cart/providers/cart_controller.dart';
+import 'widgets/po_shop_route_info.dart';
+import 'widgets/po_actions.dart';
 
 class PurchaseOrderListTile extends ConsumerStatefulWidget {
   final ModelPurchaseOrder entity;
@@ -72,13 +73,9 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
         onTap:
             widget.onTap ??
             () {
-              final poId = widget.entity.poId;
-              if (poId != null) {
-                context.pushNamed(
-                  'poItemListForPO',
-                  pathParameters: {'poId': poId},
-                );
-              }
+              ref
+                  .read(cartControllerProvider)
+                  .editPurchaseOrder(context, widget.entity);
             },
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -89,9 +86,21 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
                 _buildHeader(theme, dateStr, status, canUpdate),
                 const SizedBox(height: 8),
               ],
-              _buildShopInfo(context, theme, shopName, canDelete, status),
-              const SizedBox(height: 4),
-              _buildRouteInfo(theme, routeName),
+              PoShopRouteInfo(
+                shopName: shopName,
+                routeName: routeName,
+                trailing: PoActions(
+                  entity: widget.entity,
+                  adapter: widget.adapter,
+                  showShare: widget.showShare,
+                  canDelete: canDelete,
+                  status: status,
+                  isUpdating: _isUpdating,
+                  onUpdating: (val) {
+                    if (mounted) setState(() => _isUpdating = val);
+                  },
+                ),
+              ),
               const SizedBox(height: 8),
               _buildStatsRow(theme, itemCount),
               if (_isExpanded && widget.entity.poId != null) ...[
@@ -153,52 +162,6 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
         else
           _StatusBadge(status: status, statusColor: statusColor),
       ],
-    );
-  }
-
-  Widget _buildShopInfo(
-    BuildContext context,
-    ThemeData theme,
-    String shopName,
-    bool canDelete,
-    String status,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            shopName,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        _OrderActions(
-          entity: widget.entity,
-          adapter: widget.adapter,
-          showShare: widget.showShare,
-          canDelete: canDelete,
-          status: status,
-          isUpdating: _isUpdating,
-          onUpdating: (val) {
-            if (mounted) setState(() => _isUpdating = val);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRouteInfo(ThemeData theme, String routeName) {
-    return Text(
-      'Route: $routeName',
-      style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -316,100 +279,6 @@ class _StatusBadge extends StatelessWidget {
           fontSize: 10,
         ),
       ),
-    );
-  }
-}
-
-class _OrderActions extends ConsumerWidget {
-  final ModelPurchaseOrder entity;
-  final EntityAdapter<ModelPurchaseOrder> adapter;
-  final bool showShare;
-  final bool canDelete;
-  final String status;
-  final bool isUpdating;
-  final ValueChanged<bool> onUpdating;
-
-  const _OrderActions({
-    required this.entity,
-    required this.adapter,
-    required this.showShare,
-    required this.canDelete,
-    required this.status,
-    required this.isUpdating,
-    required this.onUpdating,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (entity.poShopId != null)
-          _IconButton(
-            icon: Icons.store,
-            color: theme.colorScheme.primary,
-            onPressed: () => context.pushNamed(
-              'viewShop',
-              pathParameters: {'id': entity.poShopId!},
-            ),
-          ),
-        if (entity.poShopId != null && showShare)
-          _IconButton(
-            icon: Icons.share,
-            color: theme.colorScheme.secondary,
-            onPressed: () => showDialog(
-              context: context,
-              useSafeArea: false,
-              builder: (context) => PurchaseOrderSharePreviewPage(
-                entity: entity,
-                adapter: adapter,
-              ),
-            ),
-          ),
-        if (status.toLowerCase() == 'delivered')
-          _IconButton(
-            icon: Icons.payment,
-            color: Colors.green,
-            onPressed: () => context.pushNamed(
-              'purchase_order_collection',
-              pathParameters: {'poId': entity.poId!},
-            ),
-          ),
-        if (canDelete &&
-            status.toLowerCase() == 'cancelled' &&
-            entity.poId != null)
-          _IconButton(
-            icon: Icons.delete_forever,
-            color: Colors.red,
-            onPressed: isUpdating
-                ? null
-                : () => PurchaseOrderTileLogic.deleteOrder(
-                    context: context,
-                    ref: ref,
-                    poId: entity.poId!,
-                    setUpdating: onUpdating,
-                  ),
-          ),
-      ],
-    );
-  }
-}
-
-class _IconButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onPressed;
-
-  const _IconButton({required this.icon, required this.color, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon, size: 20),
-      visualDensity: VisualDensity.compact,
-      onPressed: onPressed,
-      color: color,
     );
   }
 }

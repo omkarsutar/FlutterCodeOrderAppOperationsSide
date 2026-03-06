@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_supabase_order_app_mobile/core/constants/app_constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,8 +23,11 @@ class AuthService {
   /// Sign in with Google and load user profile
   Future<void> signInWithGoogle() async {
     final redirectUri = kReleaseMode
+        ? AppConstants.webAppProdUrl
+        : AppConstants.webAppLocalUrl;
+    /* final redirectUri = kReleaseMode
         ? 'https://omkarsutar.github.io/OrderAppOperationsV01/'
-        : 'http://localhost:3000/OrderAppOperationsV01/';
+        : 'http://localhost:3000/OrderAppOperationsV01/'; */
 
     try {
       await _client.auth.signInWithOAuth(

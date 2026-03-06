@@ -13,6 +13,7 @@ import '../providers/purchase_order_providers.dart';
 import '../providers/purchase_order_view_logic.dart';
 import 'purchase_order_list_tile.dart';
 import 'purchase_order_bill_page.dart';
+import '../../cart/providers/cart_controller.dart';
 import 'purchase_order_delivery_selectable_page.dart';
 import '../../po_items/po_item_barrel.dart';
 
@@ -312,7 +313,9 @@ class _PurchaseOrderListPageRiverpodState
             key: ValueKey(displayListItem.poId),
             entity: displayListItem,
             adapter: ref.watch(purchaseOrderAdapterProvider),
-            onTap: () => _navigateToPOItems(displayListItem),
+            onTap: () => ref
+                .read(cartControllerProvider)
+                .editPurchaseOrder(context, displayListItem),
             showShare: listState.selectedStatus?.toLowerCase() == 'delivered',
             onStatusChanged: (oldStatus, newStatus) {
               if (oldStatus == 'confirmed' &&

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/exceptions/app_exceptions.dart';
+import '../../../../core/services/connectivity_service.dart';
 import '../../purchase_orders/purchase_order_barrel.dart';
 import '../../po_items/model/po_item_model.dart';
 import '../../po_items/service/po_item_service_impl.dart';
@@ -22,13 +24,29 @@ class CartOrderService {
     required ProcessedCartData viewData,
     required String userId,
     required String? roleName,
+    String? shopId,
+    String? routeId,
+    String? purchaseOrderId,
   }) async {
-    // Default hardcoded IDs for guest and salesperson
-    String poShopId = '322d2aeb-34b3-47ef-aa5b-e411add1c7ba';
-    String poRouteId = '1ce6a931-4866-4645-a680-102b4b9e923b';
+    // Check connectivity before placing order
+    if (!await ConnectivityService.isOnline()) {
+      throw NoInternetException();
+    }
 
-    // Handle Retailer specific IDs
-    if (roleName?.toLowerCase() == 'retailer') {
+    // Default hardcoded IDs for guest and salesperson
+    String poShopId =
+        shopId ??
+        (roleName?.toLowerCase() == 'retailer'
+            ? '322d2aeb-34b3-47ef-aa5b-e411add1c7ba'
+            : '322d2aeb-34b3-47ef-aa5b-e411add1c7ba');
+    String poRouteId =
+        routeId ??
+        (roleName?.toLowerCase() == 'retailer'
+            ? '1ce6a931-4866-4645-a680-102b4b9e923b'
+            : '1ce6a931-4866-4645-a680-102b4b9e923b');
+
+    // Handle Retailer specific IDs if not provided
+    if (shopId == null && roleName?.toLowerCase() == 'retailer') {
       try {
         final link = await client
             .from('retailer_shop_link')
@@ -39,9 +57,6 @@ class CartOrderService {
         if (link != null) {
           poShopId = link['shop_id'] as String;
           poRouteId = link['shops']['shops_primary_route'] as String;
-          debugPrint(
-            '[CartOrderService] Retailer link found: shop=$poShopId, route=$poRouteId',
-          );
         }
       } catch (e) {
         debugPrint('[CartOrderService] Error fetching retailer link: $e');
@@ -65,6 +80,7 @@ class CartOrderService {
     }
 
     final po = ModelPurchaseOrder(
+      poId: purchaseOrderId,
       poTotalAmount: double.tryParse(viewData.totalAmount.replaceAll(',', '')),
       poLineItemCount: viewData.itemCount,
       poShopId: poShopId,
@@ -75,17 +91,27 @@ class CartOrderService {
       updatedBy: userId,
     );
 
-    final createdPo = await poService.create(po);
-    final newPoId = createdPo.poId;
+    String finalPoId;
+    if (purchaseOrderId != null && purchaseOrderId.isNotEmpty) {
+      // Update existing PO
+      await poService.update(purchaseOrderId, po);
+      finalPoId = purchaseOrderId;
+      // Delete old items
+      await poItemService.deleteAllByPo(finalPoId);
+    } else {
+      // Create new PO
+      final createdPo = await poService.create(po);
+      finalPoId = createdPo.poId ?? '';
+    }
 
-    if (newPoId == null) {
+    if (finalPoId.isEmpty) {
       throw Exception('Failed to get generated PO ID');
     }
 
     for (final processedItem in viewData.items) {
       final item = ModelPoItem(
         poItemId: null,
-        poId: newPoId,
+        poId: finalPoId,
         productId: processedItem.item.productId,
         itemName: processedItem.item.itemName,
         itemQty: processedItem.item.itemQty,

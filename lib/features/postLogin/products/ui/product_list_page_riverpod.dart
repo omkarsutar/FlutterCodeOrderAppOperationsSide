@@ -9,6 +9,10 @@ import 'package:flutter_supabase_order_app_mobile/core/providers/core_providers.
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/product_barrel.dart';
 import 'package:flutter_supabase_order_app_mobile/features/postLogin/products/ui/product_list_tile.dart';
 import 'package:flutter_supabase_order_app_mobile/shared/widgets/shared_widget_barrel.dart';
+import '../../cart/providers/cart_view_logic.dart';
+import '../../cart/providers/cart_providers.dart';
+import '../../../../core/providers/localization_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductListPageRiverpod<T> extends ConsumerStatefulWidget {
   final EntityMeta entityMeta;
@@ -63,13 +67,45 @@ class ProductListPageRiverpod<T> extends ConsumerStatefulWidget {
 }
 
 class _ProductListPageRiverpodState<T>
-    extends ConsumerState<ProductListPageRiverpod<T>> {
+    extends ConsumerState<ProductListPageRiverpod<T>>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  late AnimationController _profitHighlightController;
+  late Animation<double> _profitScaleAnimation;
+  late Animation<Color?> _profitColorAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize profit highlight animation
+    _profitHighlightController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _profitScaleAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(
+            parent: _profitHighlightController,
+            curve: Curves.easeInOut,
+          ),
+        );
+
+    _profitColorAnimation =
+        ColorTween(
+          begin: Colors.green.withValues(alpha: 0.2),
+          end: Colors.transparent,
+        ).animate(
+          CurvedAnimation(
+            parent: _profitHighlightController,
+            curve: Curves.linear,
+          ),
+        );
 
     // Set sorting configuration once when widget is created
     if (widget.initialSorting != null) {
@@ -96,8 +132,11 @@ class _ProductListPageRiverpodState<T>
         });
       });
     } else {
-      // Still set settled if no sorting config
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        // Explicitly set selected type to null (All) on startup
+        ref.read(productListControllerProvider.notifier).setSelectedType(null);
+
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && widget.isSelectionMode) {
             final session = ref
@@ -117,11 +156,118 @@ class _ProductListPageRiverpodState<T>
   void dispose() {
     _searchController.dispose();
     _focusNode.dispose();
+    _profitHighlightController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged(String query) {
     ref.read(productListControllerProvider.notifier).setSearchQuery(query);
+  }
+
+  Widget _buildProfitBox(BuildContext context, WidgetRef ref) {
+    final viewData = ref.watch(cartViewLogicProvider);
+
+    return AnimatedBuilder(
+      animation: _profitHighlightController,
+      builder: (context, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: _profitHighlightController.value > 0
+                ? _profitColorAnimation.value
+                : null,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ScaleTransition(
+            scale: _profitScaleAnimation,
+            child: _buildSummaryItem(
+              context,
+              ref.watch(l10nProvider)['shop_profit'] ?? 'Shop Profit\nOn MRP',
+              '₹${viewData.totalProfit}',
+              color: Colors.green,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSummaryItem(
+    BuildContext context,
+    String label,
+    String value, {
+    Color? color,
+  }) {
+    final theme = Theme.of(context);
+    final labelLines = label.split('\n');
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ...labelLines
+            .map(
+              (line) => Text(
+                line,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color:
+                      color?.withValues(alpha: 0.8) ??
+                      theme.colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  height: 1.1,
+                ),
+              ),
+            )
+            .toList(),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color ?? theme.colorScheme.primary,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCartAction(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final cartState = ref.watch(cartProvider);
+    final itemCount = cartState.items.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 12.0),
+      child: IconButton(
+        onPressed: () => context.pushNamed('cart'),
+        icon: Badge(
+          label: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+            child: Text(
+              itemCount.toString(),
+              key: ValueKey(itemCount),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          isLabelVisible: itemCount > 0,
+          backgroundColor: theme.colorScheme.error,
+          child: Icon(
+            Icons.shopping_cart_outlined,
+            color: theme.colorScheme.onPrimary,
+            size: 26,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -133,14 +279,26 @@ class _ProductListPageRiverpodState<T>
 
     final listState = ref.watch(productListControllerProvider);
     final controller = ref.read(productListControllerProvider.notifier);
+    final l10n = ref.watch(l10nProvider);
+
+    // Trigger animation when profit changes
+    ref.listen(cartViewLogicProvider.select((v) => v.totalProfit), (
+      prev,
+      next,
+    ) {
+      if (prev != next && next != '0.00') {
+        _profitHighlightController.forward(from: 0.0);
+      }
+    });
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: CustomAppBar(
         title: widget.isSelectionMode
-            ? 'Select ${widget.entityMeta.entityNamePlural}'
-            : widget.entityMeta.entityNamePlural,
+            ? '${l10n['confirm'] ?? 'Select'} ${widget.entityMeta.entityNamePlural}'
+            : l10n['products'] ?? widget.entityMeta.entityNamePlural,
         showBack: widget.isSelectionMode,
+        actions: widget.isSelectionMode ? [] : [_buildCartAction(context, ref)],
       ),
       drawer: widget.isSelectionMode ? null : const CustomDrawer(),
       floatingActionButton: widget.isSelectionMode
@@ -163,35 +321,48 @@ class _ProductListPageRiverpodState<T>
         ),
         child: Column(
           children: [
-            // Search Bar
+            // Search Bar and Profit Box
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 12.0,
                 vertical: 6.0,
               ),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _focusNode,
-                onChanged: _onSearchChanged,
-                decoration: InputDecoration(
-                  hintText:
-                      'Search ${widget.entityMeta.entityNamePluralLower}...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: listState.searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            controller.clearSearch();
-                          },
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  // Search Bar
+                  Expanded(
+                    flex: 7,
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _focusNode,
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText:
+                            '${l10n['search_hint'] ?? 'Search products'}...',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        suffixIcon: listState.searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 20),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  controller.clearSearch();
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                      ),
+                    ),
                   ),
-                  filled: true,
-                  fillColor: theme.colorScheme.surface,
-                ),
+                  const SizedBox(width: 8),
+                  // Profit Box
+                  Expanded(flex: 3, child: _buildProfitBox(context, ref)),
+                ],
               ),
             ),
 
@@ -238,7 +409,9 @@ class _ProductListPageRiverpodState<T>
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: ChoiceChip(
-                                label: Text('All (${filteredBySearch.length})'),
+                                label: Text(
+                                  '${l10n['home'] ?? 'All'} (${filteredBySearch.length})',
+                                ),
                                 selected: listState.selectedType == null,
                                 onSelected: (selected) {
                                   if (selected) {
@@ -290,8 +463,10 @@ class _ProductListPageRiverpodState<T>
                                     Text(
                                       listState.searchQuery.isEmpty &&
                                               listState.selectedType == null
-                                          ? 'No ${widget.entityMeta.entityNamePluralLower} found'
-                                          : 'No matching ${widget.entityMeta.entityNamePluralLower}',
+                                          ? l10n['empty_cart_msg'] ??
+                                                'No products found'
+                                          : l10n['empty_cart_msg'] ??
+                                                'No matching products',
                                       style: theme.textTheme.titleMedium
                                           ?.copyWith(
                                             color: theme.colorScheme.onSurface
