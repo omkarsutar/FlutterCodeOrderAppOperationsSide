@@ -66,6 +66,8 @@ final productFormProvider =
 class ProductFormState {
   final String productType;
   final String productName;
+  final String productNameHindi;
+  final String sku;
   final double productWeightValue;
   final String productWeightUnit;
   final double purchaseRateForRetailer;
@@ -83,6 +85,8 @@ class ProductFormState {
   const ProductFormState({
     this.productType = '',
     this.productName = '',
+    this.productNameHindi = '',
+    this.sku = '',
     this.productWeightValue = 0.0,
     this.productWeightUnit = 'gms',
     this.purchaseRateForRetailer = 0.0,
@@ -101,6 +105,8 @@ class ProductFormState {
   ProductFormState copyWith({
     String? productType,
     String? productName,
+    String? productNameHindi,
+    String? sku,
     double? productWeightValue,
     String? productWeightUnit,
     double? purchaseRateForRetailer,
@@ -118,6 +124,8 @@ class ProductFormState {
     return ProductFormState(
       productType: productType ?? this.productType,
       productName: productName ?? this.productName,
+      productNameHindi: productNameHindi ?? this.productNameHindi,
+      sku: sku ?? this.sku,
       productWeightValue: productWeightValue ?? this.productWeightValue,
       productWeightUnit: productWeightUnit ?? this.productWeightUnit,
       purchaseRateForRetailer:
@@ -139,6 +147,8 @@ class ProductFormState {
     return ProductFormState(
       productType: entity.productType,
       productName: entity.productName,
+      productNameHindi: entity.productNameHindi ?? '',
+      sku: entity.sku ?? '',
       productWeightValue: entity.productWeightValue,
       productWeightUnit: entity.productWeightUnit,
       purchaseRateForRetailer: entity.purchaseRateForRetailer,
@@ -175,6 +185,16 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
   void updateProductName(String name) {
     if (!_mounted) return;
     state = state.copyWith(productName: name, error: null);
+  }
+
+  void updateProductNameHindi(String name) {
+    if (!_mounted) return;
+    state = state.copyWith(productNameHindi: name, error: null);
+  }
+
+  void updateSku(String sku) {
+    if (!_mounted) return;
+    state = state.copyWith(sku: sku, error: null);
   }
 
   void updateWeightValue(double value) {
@@ -238,6 +258,12 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         break;
       case ModelProductFields.productName:
         updateProductName(value as String);
+        break;
+      case ModelProductFields.productNameHindi:
+        updateProductNameHindi(value as String);
+        break;
+      case ModelProductFields.sku:
+        updateSku(value as String);
         break;
       case ModelProductFields.productWeightValue:
         updateWeightValue(
@@ -312,6 +338,8 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         productId: entityId,
         productType: state.productType.trim(),
         productName: state.productName.trim(),
+        productNameHindi: state.productNameHindi.trim(),
+        sku: state.sku.trim(),
         productWeightValue: state.productWeightValue,
         productWeightUnit: state.productWeightUnit.trim(),
         purchaseRateForRetailer: state.purchaseRateForRetailer,
@@ -374,6 +402,8 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     state = ProductFormState(
       productType: entity.productType,
       productName: entity.productName,
+      productNameHindi: entity.productNameHindi ?? '',
+      sku: entity.sku ?? '',
       productWeightValue: entity.productWeightValue,
       productWeightUnit: entity.productWeightUnit,
       purchaseRateForRetailer: entity.purchaseRateForRetailer,
@@ -383,6 +413,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       isOuter: entity.isOuter,
       isActive: entity.isActive,
       isAvailable: entity.isAvailable,
+      qtyInDecimal: entity.qtyInDecimal, // Added missing field
       productImage: entity.productImage ?? '',
     );
   }

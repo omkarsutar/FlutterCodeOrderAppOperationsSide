@@ -36,14 +36,36 @@ class _ProductListTileState extends ConsumerState<ProductListTile> {
     final isAdmin = roleName == 'admin';
 
     final cartState = ref.watch(cartProvider);
+    final isReadOnly = cartState.isReadOnly;
     final cartItemIndex = cartState.items.indexWhere(
       (item) => item.productId == widget.entity.productId,
     );
 
+    final isSalesperson = roleName == 'salesperson';
+    final currentLanguage = ref.watch(languageProvider);
+    final useHindi =
+        currentLanguage == AppLanguage.hindi ||
+        currentLanguage == AppLanguage.marathi;
+
     // Extract product data using adapter + entity
-    final productName =
+    String productName =
         widget.adapter
             .getFieldValue(widget.entity, ModelProductFields.productName)
+            ?.toString() ??
+        '';
+
+    if (useHindi) {
+      final hindiName = widget.adapter
+          .getFieldValue(widget.entity, ModelProductFields.productNameHindi)
+          ?.toString();
+      if (hindiName != null && hindiName.isNotEmpty) {
+        productName = hindiName;
+      }
+    }
+
+    final sku =
+        widget.adapter
+            .getFieldValue(widget.entity, ModelProductFields.sku)
             ?.toString() ??
         '';
 
@@ -174,78 +196,163 @@ class _ProductListTileState extends ConsumerState<ProductListTile> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  productName,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$weightStr • ${packagingType.toUpperCase()}$outerInfo',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 10,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (mrp != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ref.watch(l10nProvider)['mrp'] ?? 'MRP',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '₹${mrp.toStringAsFixed(2)}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (cartItemIndex == -1)
-                      _buildAddButton(context, ref, theme),
-                  ],
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  child: cartItemIndex != -1
-                      ? Column(
-                          children: [
-                            const SizedBox(height: 12),
-                            _buildQtySelector(
+                if (isSalesperson) ...[
+                  // Salesperson Layout Structure: Align Action to RIGHT
+                  if (!isReadOnly) ...[
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: cartItemIndex == -1
+                          ? _buildAddButton(context, ref, theme)
+                          : _buildQtySelector(
                               context,
                               ref,
                               theme,
                               cartState.items[cartItemIndex],
+                              isReadOnly: isReadOnly,
                             ),
-                          ],
-                        )
-                      : const SizedBox.shrink(),
-                ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  // Details BELOW (Always show in this order for salesperson)
+                  _buildProductInfo(theme, isSalesperson, sku, productName),
+                  const SizedBox(height: 4),
+                  _buildWeightAndPackaging(
+                    theme,
+                    weightStr,
+                    packagingType,
+                    outerInfo,
+                  ),
+                  const SizedBox(height: 8),
+                  if (mrp != null) _buildMrpSection(theme, ref, mrp),
+                ] else ...[
+                  // Default Layout: Details FIRST, Action BOTTOM
+                  _buildProductInfo(theme, isSalesperson, sku, productName),
+                  const SizedBox(height: 4),
+                  _buildWeightAndPackaging(
+                    theme,
+                    weightStr,
+                    packagingType,
+                    outerInfo,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (mrp != null) _buildMrpSection(theme, ref, mrp),
+                      if (cartItemIndex == -1 && !isReadOnly)
+                        _buildAddButton(context, ref, theme),
+                    ],
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: (cartItemIndex != -1)
+                        ? Column(
+                            children: [
+                              const SizedBox(height: 12),
+                              _buildQtySelector(
+                                context,
+                                ref,
+                                theme,
+                                cartState.items[cartItemIndex],
+                                isReadOnly: isReadOnly,
+                              ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProductInfo(
+    ThemeData theme,
+    bool isSalesperson,
+    String sku,
+    String productName,
+  ) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          if (isSalesperson && sku.isNotEmpty)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Container(
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  sku,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 9,
+                  ),
+                ),
+              ),
+            ),
+          TextSpan(text: productName),
+        ],
+      ),
+      style: theme.textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.bold,
+        height: 1.2,
+      ),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildWeightAndPackaging(
+    ThemeData theme,
+    String weightStr,
+    String packagingType,
+    String outerInfo,
+  ) {
+    return Text(
+      '$weightStr • ${packagingType.toUpperCase()}$outerInfo',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontSize: 10,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildMrpSection(ThemeData theme, WidgetRef ref, num mrp) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          ref.watch(l10nProvider)['mrp'] ?? 'MRP',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.primary,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          '₹${mrp.toStringAsFixed(2)}',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+            fontSize: 15,
+          ),
+        ),
+      ],
     );
   }
 
@@ -275,7 +382,7 @@ class _ProductListTileState extends ConsumerState<ProductListTile> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: Text(
-          ref.watch(l10nProvider)['add_to_cart'] ?? 'ADD to Cart',
+          '${ref.watch(l10nProvider)['add_to_cart'] ?? 'ADD to Cart'} +',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         ),
       ),
@@ -286,14 +393,16 @@ class _ProductListTileState extends ConsumerState<ProductListTile> {
     BuildContext context,
     WidgetRef ref,
     ThemeData theme,
-    ModelPoItem cartItem,
-  ) {
+    ModelPoItem cartItem, {
+    bool isReadOnly = false,
+  }) {
     final cartNotifier = ref.read(cartProvider.notifier);
     final currentQty = cartItem.itemQty ?? 0.0;
 
     return QuantitySelector(
       quantity: currentQty,
       isDecimal: widget.entity.qtyInDecimal,
+      readOnly: isReadOnly,
       onQuantityChanged: (newQty) {
         if (newQty != currentQty) {
           cartNotifier.updateQuantity(cartItem.poItemId!, newQty - currentQty);

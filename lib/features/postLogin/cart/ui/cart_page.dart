@@ -78,8 +78,7 @@ class _CartPageState extends ConsumerState<CartPage>
     final l10n = ref.watch(l10nProvider);
     final cartState = ref.watch(cartProvider);
 
-    final status = cartState.status?.toLowerCase();
-    final isReadOnly = status == 'delivered' || status == 'cancelled';
+    final isReadOnly = cartState.isReadOnly;
 
     ref.listen(
       cartViewLogicProvider.select((d) => (d.totalProfit, d.itemCount)),
