@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/field_config.dart';
 import '../../../core/config/module_config.dart';
 import '../../../core/routing/module_route_generator.dart';
 import '../../../core/services/entity_service.dart';
@@ -24,6 +25,50 @@ class ProductsRoutesJson {
     _config = await ModuleConfig.loadFromAsset(
       'lib/features/postLogin/products/product_config.json',
     );
+
+    // Safety check: ensure new fields are present (handles stale asset bundling)
+    final fieldNames = _config.fields.map((f) => f.name).toSet();
+    final nameIndex = _config.fields.indexWhere(
+      (f) => f.name == ModelProductFields.productName,
+    );
+
+    if (!fieldNames.contains(ModelProductFields.productNameHindi)) {
+      final insertIndex = nameIndex != -1
+          ? nameIndex + 1
+          : _config.fields.length;
+      _config.fields.insert(
+        insertIndex,
+        FieldConfig(
+          name: ModelProductFields.productNameHindi,
+          label: 'Product Name (Hindi)',
+          type: FieldType.text,
+          visibleInList: true,
+          visibleInForm: true,
+        ),
+      );
+    }
+
+    // Re-verify index and fields for SKU
+    final currentFieldNames = _config.fields.map((f) => f.name).toSet();
+    if (!currentFieldNames.contains(ModelProductFields.sku)) {
+      // Find name index again because it might have shifted
+      final updatedNameIndex = _config.fields.indexWhere(
+        (f) => f.name == ModelProductFields.productName,
+      );
+      final insertIndex = updatedNameIndex != -1
+          ? updatedNameIndex + 2
+          : _config.fields.length;
+      _config.fields.insert(
+        insertIndex,
+        FieldConfig(
+          name: ModelProductFields.sku,
+          label: 'SKU',
+          type: FieldType.text,
+          visibleInList: true,
+          visibleInForm: true,
+        ),
+      );
+    }
 
     // Create typed provider aliases
     final entityServiceProvider = Provider<EntityService<ModelProduct>>((ref) {

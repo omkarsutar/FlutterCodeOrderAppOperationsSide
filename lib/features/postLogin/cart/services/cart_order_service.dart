@@ -74,9 +74,27 @@ class CartOrderService {
     final utmSource = prefs.getString('utm_source') ?? '';
 
     String userRoleStr = roleName != null ? ' [$roleName]' : '';
-    String userComment = '$userName ($userEmail)$userRoleStr';
+    String adminComment = '$userName ($userEmail)$userRoleStr';
     if (utmSource.isNotEmpty) {
-      userComment += ' [UTM: $utmSource]';
+      adminComment += ' [UTM: $utmSource]';
+    }
+
+    String finalAdminComment = adminComment;
+    String? finalUserComment;
+    if (purchaseOrderId != null && purchaseOrderId.isNotEmpty) {
+      try {
+        final existingPo = await poService.fetchById(purchaseOrderId);
+        finalUserComment = existingPo.userComment;
+        if (existingPo.adminComment != null && existingPo.adminComment!.isNotEmpty) {
+          if (!existingPo.adminComment!.contains(adminComment)) {
+            finalAdminComment = '${existingPo.adminComment} | $adminComment';
+          } else {
+            finalAdminComment = existingPo.adminComment!;
+          }
+        }
+      } catch (e) {
+        debugPrint('[CartOrderService] Error fetching existing PO comment: $e');
+      }
     }
 
     final po = ModelPurchaseOrder(
@@ -86,7 +104,8 @@ class CartOrderService {
       poShopId: poShopId,
       poRouteId: poRouteId,
       status: 'confirmed',
-      userComment: userComment,
+      userComment: finalUserComment,
+      adminComment: finalAdminComment,
       createdBy: userId,
       updatedBy: userId,
     );

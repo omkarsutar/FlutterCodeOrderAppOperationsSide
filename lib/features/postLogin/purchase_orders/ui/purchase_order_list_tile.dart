@@ -63,6 +63,7 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
     final status = widget.entity.status ?? 'pending';
     final itemCount = widget.entity.poLineItemCount ?? 0;
     final commentStr = widget.entity.userComment ?? '';
+    final adminCommentStr = widget.entity.adminComment ?? '';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -107,7 +108,11 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
                 const SizedBox(height: 16),
                 PoItemSummaryList(poId: widget.entity.poId!, status: status),
               ],
-              if (commentStr.isNotEmpty) _buildComment(theme, commentStr),
+              if (commentStr.isNotEmpty)
+                _buildComment(theme, 'User Comment', commentStr),
+              if (adminCommentStr.isNotEmpty)
+                _buildComment(theme, 'Admin Comment', adminCommentStr,
+                    color: Colors.red.shade700),
             ],
           ),
         ),
@@ -197,17 +202,15 @@ class _PurchaseOrderListTileState extends ConsumerState<PurchaseOrderListTile> {
     );
   }
 
-  Widget _buildComment(ThemeData theme, String commentStr) {
+  Widget _buildComment(ThemeData theme, String title, String commentStr, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: Text(
-        'Comment: $commentStr',
+        '$title: $commentStr',
         style: theme.textTheme.bodySmall?.copyWith(
           fontStyle: FontStyle.italic,
-          color: theme.colorScheme.onSurfaceVariant,
+          color: color ?? theme.colorScheme.onSurfaceVariant,
         ),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }

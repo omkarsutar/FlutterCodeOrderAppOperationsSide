@@ -26,6 +26,8 @@
         },
         "searchFields": [
             "product_name",
+            "product_name_hindi",
+            "sku",
             "product_type",
             "packaging_type"
         ]
@@ -65,6 +67,15 @@
             "label": "Product Name",
             "type": "text",
             "required": true,
+            "maxLength": 200,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "product_name_hindi",
+            "label": "Product Name (Hindi)",
+            "type": "text",
+            "required": false,
             "maxLength": 200,
             "visibleInList": true,
             "visibleInForm": true
@@ -158,6 +169,15 @@
             "label": "Product Image",
             "type": "text",
             "required": false,
+            "visibleInList": true,
+            "visibleInForm": true
+        },
+        {
+            "name": "sku",
+            "label": "SKU",
+            "type": "text",
+            "required": false,
+            "maxLength": 100,
             "visibleInList": true,
             "visibleInForm": true
         },

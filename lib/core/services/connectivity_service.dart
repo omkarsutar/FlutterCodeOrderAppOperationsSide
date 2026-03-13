@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service that monitors internet connectivity status.
@@ -9,8 +10,18 @@ class ConnectivityService {
   /// One-shot async check: returns true if device has any network connection.
   /// Used inside service layer methods to guard API calls.
   static Future<bool> isOnline() async {
-    final results = await _connectivity.checkConnectivity();
-    return !results.contains(ConnectivityResult.none);
+    // On web, checking connectivity via plugin can sometimes throw MissingPluginException
+    // or behave inconsistently across different browsers/PWA environments.
+    if (kIsWeb) return true;
+
+    try {
+      final results = await _connectivity.checkConnectivity();
+      return !results.contains(ConnectivityResult.none);
+    } catch (e) {
+      debugPrint('[ConnectivityService] Error checking connectivity: $e');
+      // Fallback to true to avoid blocking the user if the plugin fails
+      return true;
+    }
   }
 }
 

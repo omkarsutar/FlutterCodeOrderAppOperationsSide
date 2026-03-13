@@ -10,6 +10,7 @@ class ModelPurchaseOrderFields {
   static const String poRouteId = 'po_route_id';
   static const String poShopId = 'po_shop_id';
   static const String userComment = 'user_comment';
+  static const String adminComment = 'admin_comment';
   static const String profitToShop = 'profit_to_shop';
   static const String poLat = 'po_lat';
   static const String poLong = 'po_long';
@@ -27,6 +28,7 @@ class ModelPurchaseOrderFields {
     poRouteId: 'Route',
     poShopId: 'Shop',
     userComment: 'User Comment',
+    adminComment: 'Admin Comment',
     profitToShop: 'Profit to Shop',
     poLat: 'Latitude',
     poLong: 'Longitude',
@@ -48,6 +50,7 @@ class ModelPurchaseOrder {
   final String? poRouteId; // required FK
   final String? poShopId; // required FK
   final String? userComment; // nullable
+  final String? adminComment; // nullable
   final double? profitToShop; // nullable
   final double? poLat; // nullable
   final double? poLong; // nullable
@@ -66,6 +69,7 @@ class ModelPurchaseOrder {
     this.poRouteId,
     this.poShopId,
     this.userComment,
+    this.adminComment,
     this.profitToShop,
     this.poLat,
     this.poLong,
@@ -103,6 +107,7 @@ class ModelPurchaseOrder {
       poRouteId: map[ModelPurchaseOrderFields.poRouteId] as String?,
       poShopId: map[ModelPurchaseOrderFields.poShopId] as String?,
       userComment: map[ModelPurchaseOrderFields.userComment] as String?,
+      adminComment: map[ModelPurchaseOrderFields.adminComment] as String?,
       profitToShop: map[ModelPurchaseOrderFields.profitToShop] != null
           ? double.tryParse(
               map[ModelPurchaseOrderFields.profitToShop].toString(),
@@ -146,6 +151,8 @@ class ModelPurchaseOrder {
     if (poShopId != null) map[ModelPurchaseOrderFields.poShopId] = poShopId;
     if (userComment != null)
       map[ModelPurchaseOrderFields.userComment] = userComment;
+    if (adminComment != null)
+      map[ModelPurchaseOrderFields.adminComment] = adminComment;
     if (profitToShop != null)
       map[ModelPurchaseOrderFields.profitToShop] = profitToShop;
     if (poLat != null) map[ModelPurchaseOrderFields.poLat] = poLat;
@@ -171,6 +178,7 @@ class ModelPurchaseOrder {
       'poRouteId': poRouteId,
       'poShopId': poShopId,
       'userComment': userComment,
+      'adminComment': adminComment,
       'profitToShop': profitToShop,
       'poLat': poLat,
       'poLong': poLong,
@@ -191,6 +199,7 @@ class ModelPurchaseOrder {
       poRouteId: json['poRouteId'] as String,
       poShopId: json['poShopId'] as String,
       userComment: json['userComment'] as String?,
+      adminComment: json['adminComment'] as String?,
       profitToShop: (json['profitToShop'] as num?)?.toDouble(),
       poLat: (json['poLat'] as num?)?.toDouble(),
       poLong: (json['poLong'] as num?)?.toDouble(),

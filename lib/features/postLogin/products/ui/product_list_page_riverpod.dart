@@ -99,7 +99,7 @@ class _ProductListPageRiverpodState<T>
     _profitColorAnimation =
         ColorTween(
           begin: Colors.green.withValues(alpha: 0.2),
-          end: Colors.transparent,
+          end: Colors.white,
         ).animate(
           CurvedAnimation(
             parent: _profitHighlightController,
@@ -131,6 +131,13 @@ class _ProductListPageRiverpodState<T>
           }
         });
       });
+
+      _focusNode.addListener(() {
+        if (_focusNode.hasFocus && _searchController.text.isNotEmpty) {
+          _searchController.clear();
+          ref.read(productListControllerProvider.notifier).clearSearch();
+        }
+      });
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -148,6 +155,13 @@ class _ProductListPageRiverpodState<T>
             }
           }
         });
+      });
+
+      _focusNode.addListener(() {
+        if (_focusNode.hasFocus && _searchController.text.isNotEmpty) {
+          _searchController.clear();
+          ref.read(productListControllerProvider.notifier).clearSearch();
+        }
       });
     }
   }
@@ -175,7 +189,7 @@ class _ProductListPageRiverpodState<T>
           decoration: BoxDecoration(
             color: _profitHighlightController.value > 0
                 ? _profitColorAnimation.value
-                : null,
+                : Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ScaleTransition(
@@ -211,9 +225,7 @@ class _ProductListPageRiverpodState<T>
                 line,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color:
-                      color?.withValues(alpha: 0.8) ??
-                      theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   height: 1.1,
@@ -336,6 +348,12 @@ class _ProductListPageRiverpodState<T>
                       controller: _searchController,
                       focusNode: _focusNode,
                       onChanged: _onSearchChanged,
+                      onTap: () {
+                        _searchController.clear();
+                        ref
+                            .read(productListControllerProvider.notifier)
+                            .clearSearch();
+                      },
                       decoration: InputDecoration(
                         hintText:
                             '${l10n['search_hint'] ?? 'Search products'}...',

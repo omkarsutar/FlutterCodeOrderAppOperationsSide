@@ -37,6 +37,12 @@ class CartState {
   double get totalProfit =>
       items.fold(0, (sum, item) => sum + (item.profitToShop ?? 0));
 
+  bool get isReadOnly {
+    if (status == null) return false;
+    final s = status!.toLowerCase();
+    return s != 'pending' && s != 'confirmed';
+  }
+
   CartState copyWith({
     List<ModelPoItem>? items,
     bool? isLoading,

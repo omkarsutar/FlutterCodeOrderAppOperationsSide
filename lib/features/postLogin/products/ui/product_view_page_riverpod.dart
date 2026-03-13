@@ -12,6 +12,7 @@ import '../../../../router/app_routes.dart';
 import '../providers/product_providers.dart';
 import '../model/product_model.dart';
 import '../../po_items/model/po_item_model.dart';
+import '../../../../core/providers/localization_provider.dart';
 
 /// Product-specific View Page
 /// Decoupled from EntityViewPageRiverpod for customization
@@ -93,33 +94,20 @@ class ProductViewPageRiverpod extends ConsumerWidget {
     final theme = Theme.of(context);
 
     // Get specific fields per user request
-    final weightVal = fields
-        .firstWhere(
-          (f) => f.name == 'product_weight_value',
-          orElse: () => fields[0],
-        )
-        .displayValue;
-    final weightUnit = fields
-        .firstWhere(
-          (f) => f.name == 'product_weight_unit',
-          orElse: () => fields[0],
-        )
-        .displayValue;
-    final mrp = fields
-        .firstWhere((f) => f.name == 'mrp', orElse: () => fields[0])
-        .displayValue;
-    final packaging = fields
-        .firstWhere((f) => f.name == 'packaging_type', orElse: () => fields[0])
-        .displayValue;
-    final productType = fields
-        .firstWhere((f) => f.name == 'product_type', orElse: () => fields[0])
-        .displayValue;
-
     final displayItems = [
-      {'label': 'Type', 'value': productType},
-      {'label': 'Weight', 'value': '$weightVal $weightUnit'},
-      {'label': 'MRP', 'value': mrp},
-      {'label': 'Packaging Type', 'value': packaging},
+      {'label': 'Type', 'value': product.productType},
+      {
+        'label': 'Weight',
+        'value': '${product.productWeightValue} ${product.productWeightUnit}',
+      },
+      {'label': 'MRP', 'value': '₹${product.mrp}'},
+      {'label': 'Packaging Type', 'value': product.packagingType},
+      {
+        'label': 'SKU',
+        'value': (product.sku == null || product.sku!.isEmpty)
+            ? '-'
+            : product.sku!,
+      },
     ];
 
     // Add Outer Qty if applicable
@@ -327,7 +315,8 @@ class ProductViewPageRiverpod extends ConsumerWidget {
       drawer: context.canPop() ? null : const CustomDrawer(),
       bottomNavigationBar: productAsync.when(
         data: (product) {
-          if (product == null) return null;
+          final isReadOnly = ref.watch(cartProvider).isReadOnly;
+          if (product == null || isReadOnly) return null;
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -411,6 +400,21 @@ class ProductViewPageRiverpod extends ConsumerWidget {
                 headerPhotoUrl = Uri.encodeFull(Uri.decodeFull(headerPhotoUrl));
               }
 
+              final currentLanguage = ref.watch(languageProvider);
+              final useHindi =
+                  currentLanguage == AppLanguage.hindi ||
+                  currentLanguage == AppLanguage.marathi;
+
+              String primaryName = product.productName;
+              String? secondaryName = product.productNameHindi;
+
+              if (useHindi &&
+                  secondaryName != null &&
+                  secondaryName.isNotEmpty) {
+                primaryName = secondaryName;
+                secondaryName = product.productName;
+              }
+
               return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,7 +424,7 @@ class ProductViewPageRiverpod extends ConsumerWidget {
                         context,
                         theme,
                         headerPhotoUrl,
-                        product.productName,
+                        primaryName,
                       ),
                     Padding(
                       padding: const EdgeInsets.all(20),
@@ -429,15 +433,27 @@ class ProductViewPageRiverpod extends ConsumerWidget {
                         children: [
                           // Product Name
                           Text(
-                            product.productName,
+                            primaryName,
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w400,
                               color: Colors.black87,
-                              fontSize:
-                                  24, // Explicit size to ensure it's prominent
+                              fontSize: 24,
                               height: 1.4,
                             ),
                           ),
+                          if (secondaryName != null &&
+                              secondaryName.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              secondaryName,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[700],
+                                fontSize: 20,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 32),
                           // Highlights Grid
                           _buildProductHighlights(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../po_items/model/po_item_model.dart';
 import '../../products/product_barrel.dart';
 import '../providers/cart_providers.dart';
+import '../../../../core/providers/localization_provider.dart';
 import '../../../../core/widgets/quantity_selector.dart';
 
 class CartItemCard extends ConsumerStatefulWidget {
@@ -174,14 +175,35 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            widget.entity.itemName ?? 'Unnamed Item',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          child: Builder(
+                            builder: (context) {
+                              final currentLanguage = ref.watch(
+                                languageProvider,
+                              );
+                              final useHindi =
+                                  currentLanguage == AppLanguage.hindi ||
+                                  currentLanguage == AppLanguage.marathi;
+
+                              String displayName =
+                                  widget.entity.itemName ?? 'Unnamed Item';
+
+                              if (useHindi && product != null) {
+                                final hindiName = product.productNameHindi;
+                                if (hindiName != null && hindiName.isNotEmpty) {
+                                  displayName = hindiName;
+                                }
+                              }
+
+                              return Text(
+                                displayName,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 4),
